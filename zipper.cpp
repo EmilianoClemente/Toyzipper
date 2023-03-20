@@ -13,6 +13,7 @@ void make_crc_table(void)
 {
     unsigned long c;
     int n, k;
+
     for (n = 0; n < 256; n++) {
         c = (unsigned long) n;
         for (k = 0; k < 8; k++) {
@@ -24,6 +25,7 @@ void make_crc_table(void)
         }
         crc_table[n] = c;
     }
+
     crc_table_computed = 1;
 }
 
@@ -39,8 +41,7 @@ void make_crc_table(void)
  * if (crc != original_crc) error();
  * */
 unsigned long update_crc(unsigned long crc,
-        unsigned char *buf, int len)
-{
+        unsigned char *buf, int len) {
     unsigned long c = crc ^ 0xffffffffL;
     int n;
 
@@ -49,6 +50,7 @@ unsigned long update_crc(unsigned long crc,
     for (n = 0; n < len; n++) {
         c = crc_table[(c ^ buf[n]) & 0xff] ^ (c >> 8);
     }
+
     return c ^ 0xffffffffL;
 }
 
@@ -63,6 +65,7 @@ static uint32_t GetMSDOSTime(){
             ((time.tm_min&0x1f)<<5)|
             ((time.tm_sec/2)&0x1f)
             );
+
     return ms_dos_time;
 }
 
@@ -143,23 +146,6 @@ static int WriteCentralDirectoryHeader(CentralDirectoryHeader* header, Writer* w
     return written_size;
 }
 
-struct DataDescriptor{
-	uint32_t crc32;
-	uint32_t compressed_size;
-	uint32_t uncompressed_size;
-};
-
-static int WriteDataDescriptor(DataDescriptor* header, Writer* w){
-	const uint32_t signature = 0x08074b50;
-    int written_size = 0;
-
-    written_size+=w->Write(&signature, sizeof(signature));
-	written_size+=w->Write(&(header->crc32), sizeof(uint32_t)); 
-	written_size+=w->Write(&(header->compressed_size), sizeof(uint32_t)); 
-	written_size+=w->Write(&(header->uncompressed_size), sizeof(uint32_t)); 
-    return written_size;
-}
-
 struct EndOfCentralDirectoryRecord{
 	uint16_t num_of_this_disk; //このディスクの番号
 	uint16_t num_of_start_central_directory;
@@ -219,7 +205,7 @@ int Compress(Reader* r, Writer* w,uint32_t& file_size, uint32_t& compressed_file
     return 0;
 }
 
-int MakeZipData(Reader* r, SeekWriter* w, const char* filename){
+int CreateZipFile(Reader* r, SeekWriter* w, const char* filename){
     uint16_t compress_method = 8;
     uint16_t version_need_to_extract = 45;
     uint16_t flag = 0x0;
@@ -236,6 +222,7 @@ int MakeZipData(Reader* r, SeekWriter* w, const char* filename){
         0x00,       //uint32_t compressed_size;
         0x00,       //uint32_t uncompressed_size;
     };
+
     CentralDirectoryHeader central_directory_header = {
         0x0314,       //uint16_t version;
         version_need_to_extract,       //uint16_t version_needed_to_extract;
@@ -254,6 +241,7 @@ int MakeZipData(Reader* r, SeekWriter* w, const char* filename){
         0x00,       //uint32_t external_file_attributes;
         0x00,       //uint32_t offset_of_local_header;
     };
+
     EndOfCentralDirectoryRecord end_of_central_directory_record = {
         0x00,       //uint16_t num_of_this_disk; //このディスクの番号
         0x00,       //uint16_t num_of_start_central_directory;
@@ -281,10 +269,10 @@ int MakeZipData(Reader* r, SeekWriter* w, const char* filename){
 
     WriteEndofCentralDirectoryRecord(&end_of_central_directory_record, w);
 
-	w->Seek(14/* position where crc located */, SEEK_SET);
-	w->Write(&crc, sizeof(crc));
-	w->Write(&compressed_file_size, sizeof(compressed_file_size));
-	w->Write(&file_size, sizeof(file_size));
+    w->Seek(14/* position where crc located */, SEEK_SET);
+    w->Write(&crc, sizeof(crc));
+    w->Write(&compressed_file_size, sizeof(compressed_file_size));
+    w->Write(&file_size, sizeof(file_size));
 
     return 0;
 }

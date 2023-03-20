@@ -1,6 +1,3 @@
-#include <zlib.h>
-#include <stdio.h>
-#include <string.h>
 #include "zipper.h"
 
 bool test_MakeZip(){
@@ -129,7 +126,7 @@ int main(int argc, char* argv[]) {
     if(zip&&to_be_zipped){
         FileReader r(to_be_zipped);
         FileSeekWriter sw(zip);
-        MakeZipData(&r, &sw, argv[TO_BE_ZIPPED_FILENAME]);
+        CreateZipFile(&r, &sw, argv[TO_BE_ZIPPED_FILENAME]);
     }
 
     if(!zip){
